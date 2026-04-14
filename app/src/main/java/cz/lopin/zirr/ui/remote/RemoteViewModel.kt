@@ -36,7 +36,7 @@ class RemoteViewModel(
 
     val currentVariant: StateFlow<RemoteVariant?> = combine(_variants, _currentVariantIndex) { list, idx ->
         list.getOrNull(idx)
-    }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
     val isFavoriteVariant: StateFlow<Boolean> = combine(
         repository.getFavoriteRemotes(),
@@ -142,6 +142,7 @@ class RemoteViewModel(
     fun onNavOk() = transmitKey("ok")
     fun onMenu() = transmitKey("menu")
     fun onDigitClick(digit: Int) = transmitKey(digit.toString())
+    fun onCustomKeyClick(key: String) = transmitKey(key)
 
     private fun transmit(command: IrCommand) {
         if (!irManager.hasIrEmitter()) {

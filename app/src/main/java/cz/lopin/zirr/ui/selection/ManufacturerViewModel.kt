@@ -28,18 +28,22 @@ class ManufacturerViewModel(
     private val _uiState = MutableStateFlow<SelectionUiState>(SelectionUiState.Loading)
     val uiState: StateFlow<SelectionUiState> = _uiState.asStateFlow()
 
-    init {
-        loadFavorites()
-    }
+    private var latestFavorites: List<RemoteEntity> = emptyList()
 
-    fun loadFavorites() {
+    init {
         viewModelScope.launch {
             repository.getFavoriteRemotes().collect { remotes ->
-                if (_uiState.value !is SelectionUiState.Search) {
+                latestFavorites = remotes
+                val current = _uiState.value
+                if (current !is SelectionUiState.Search) {
                     _uiState.value = SelectionUiState.Favorites(remotes)
                 }
             }
         }
+    }
+
+    fun loadFavorites() {
+        _uiState.value = SelectionUiState.Favorites(latestFavorites)
     }
 
     fun showSearch() {

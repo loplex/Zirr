@@ -16,7 +16,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import cz.lopin.zirr.data.model.RemoteVariant
+
+enum class RemoteMode { MAIN, NUMERIC, EXTRA }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -27,8 +31,9 @@ fun RemoteScreen(
     val selectedRemote by viewModel.selectedRemote.collectAsState()
     val variants by viewModel.variants.collectAsState()
     val currentIndex by viewModel.currentVariantIndex.collectAsState()
+    val currentVariant by viewModel.currentVariant.collectAsState()
 
-    var showDigits by remember { mutableStateOf(false) }
+    var currentMode by remember { mutableStateOf(RemoteMode.MAIN) }
     val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(Unit) {
@@ -87,7 +92,7 @@ fun RemoteScreen(
                         )
                     }
                     IconButton(onClick = onNavigateToSelection) {
-                        Icon(Icons.Rounded.Settings, contentDescription = "Change Remote")
+                        Icon(Icons.Rounded.Home, contentDescription = "Home Screen")
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
@@ -100,12 +105,22 @@ fun RemoteScreen(
                 actions = {
                     Spacer(Modifier.weight(1f))
                     FilledTonalIconToggleButton(
-                        checked = showDigits,
-                        onCheckedChange = { showDigits = it }
+                        checked = currentMode == RemoteMode.NUMERIC,
+                        onCheckedChange = { currentMode = if (it) RemoteMode.NUMERIC else RemoteMode.MAIN }
                     ) {
                         Icon(
-                            if (showDigits) Icons.Rounded.Apps else Icons.Rounded.Dialpad,
+                            if (currentMode == RemoteMode.NUMERIC) Icons.Rounded.Apps else Icons.Rounded.Dialpad,
                             contentDescription = "Toggle Keypad"
+                        )
+                    }
+                    Spacer(Modifier.width(16.dp))
+                    FilledTonalIconToggleButton(
+                        checked = currentMode == RemoteMode.EXTRA,
+                        onCheckedChange = { currentMode = if (it) RemoteMode.EXTRA else RemoteMode.MAIN }
+                    ) {
+                        Icon(
+                            Icons.Rounded.MoreHoriz,
+                            contentDescription = "Toggle Extra Keys"
                         )
                     }
                     Spacer(Modifier.weight(1f))
@@ -118,10 +133,46 @@ fun RemoteScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            if (showDigits) {
-                NumericKeypad(onDigitClick = viewModel::onDigitClick)
-            } else {
-                MainRemoteControls(viewModel = viewModel)
+            when (currentMode) {
+                RemoteMode.NUMERIC -> NumericKeypad(onDigitClick = viewModel::onDigitClick)
+                RemoteMode.EXTRA -> ExtraKeysPad(variant = currentVariant, onKeyClick = viewModel::onCustomKeyClick)
+                RemoteMode.MAIN -> MainRemoteControls(viewModel = viewModel)
+            }
+        }
+    }
+}
+
+@Composable
+fun ExtraKeysPad(variant: RemoteVariant?, onKeyClick: (String) -> Unit) {
+    if (variant == null || variant.keys == null || variant.keys.isEmpty()) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Text("No extra keys available", color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        return
+    }
+
+    val allKeys = variant.keys.keys.toList().sorted()
+
+    LazyVerticalGrid(
+        columns = GridCells.Adaptive(minSize = 100.dp),
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        items(allKeys) { key ->
+            FilledTonalButton(
+                onClick = { onKeyClick(key) },
+                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 12.dp),
+                shape = MaterialTheme.shapes.medium
+            ) {
+                Text(
+                    text = key.uppercase(),
+                    style = MaterialTheme.typography.labelMedium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
             }
         }
     }
