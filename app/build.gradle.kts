@@ -1,4 +1,6 @@
 import cz.lopin.zirr.build.GenerateTvRemotesTask
+import java.text.SimpleDateFormat
+import java.util.Date
 
 plugins {
     alias(libs.plugins.android.application)
@@ -73,6 +75,9 @@ androidComponents {
         )
     }
 }
+
+val dateStr: String = SimpleDateFormat("yyyy-MM-dd_HH-mm-ss").format(Date())
+base.archivesName.set("Zirr-$dateStr")
 
 ksp {
     arg("room.schemaLocation", "$projectDir/schemas")
