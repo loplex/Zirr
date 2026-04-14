@@ -50,18 +50,27 @@ fun RemoteScreen(
                         )
                         if (variants.isNotEmpty()) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                IconButton(onClick = viewModel::prevVariant) {
+                                IconButton(
+                                    onClick = viewModel::prevVariant,
+                                    modifier = Modifier.size(72.dp)
+                                ) {
                                     Icon(Icons.AutoMirrored.Rounded.KeyboardArrowLeft,
-                                        contentDescription = "Previous"
+                                        contentDescription = "Previous",
+                                        modifier = Modifier.size(64.dp)
                                     )
                                 }
                                 Text(
                                     text = "Model ${currentIndex + 1} / ${variants.size}",
-                                    style = MaterialTheme.typography.bodySmall
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    modifier = Modifier.padding(horizontal = 8.dp)
                                 )
-                                IconButton(onClick = viewModel::nextVariant) {
+                                IconButton(
+                                    onClick = viewModel::nextVariant,
+                                    modifier = Modifier.size(72.dp)
+                                ) {
                                     Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight,
-                                        contentDescription = "Next"
+                                        contentDescription = "Next",
+                                        modifier = Modifier.size(64.dp)
                                     )
                                 }
                             }
@@ -69,6 +78,14 @@ fun RemoteScreen(
                     }
                 },
                 actions = {
+                    val isFavorite by viewModel.isFavoriteVariant.collectAsState()
+                    IconButton(onClick = viewModel::toggleFavoriteVariant) {
+                        Icon(
+                            imageVector = if (isFavorite) Icons.Rounded.Star else Icons.Rounded.StarOutline,
+                            contentDescription = if (isFavorite) "Remove from favorites" else "Add to favorites",
+                            tint = if (isFavorite) MaterialTheme.colorScheme.primary else LocalContentColor.current
+                        )
+                    }
                     IconButton(onClick = onNavigateToSelection) {
                         Icon(Icons.Rounded.Settings, contentDescription = "Change Remote")
                     }

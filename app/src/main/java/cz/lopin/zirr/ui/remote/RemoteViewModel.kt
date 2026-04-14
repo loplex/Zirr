@@ -38,16 +38,33 @@ class RemoteViewModel(
         list.getOrNull(idx)
     }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
+    val isFavoriteVariant: StateFlow<Boolean> = combine(
+        repository.getFavoriteRemotes(),
+        selectedRemote,
+        _currentVariantIndex
+    ) { favorites, selected, idx ->
+        if (selected == null) return@combine false
+        val modelStr = "Model ${idx + 1}"
+        favorites.any { it.brandName == selected.brandName && it.modelName == modelStr }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
+
     init {
         viewModelScope.launch {
+            var currentBrand: String? = null
+
             selectedRemote.collectLatest { remote ->
                 if (remote != null) {
-                    val loadedVariants = repository.getRemoteVariants(remote.brandName)
-                    _variants.value = loadedVariants
-                    // Try to find the index of the previously saved model, otherwise 0
-                    val index = loadedVariants.indexOfFirst { it.remoteNumber == remote.modelName }.coerceAtLeast(0)
-                    _currentVariantIndex.value = index
+                    if (currentBrand != remote.brandName) {
+                        currentBrand = remote.brandName
+                        val loadedVariants = repository.getRemoteVariants(remote.brandName)
+                        _variants.value = loadedVariants
+
+                        // Try to find the index of the previously saved model, otherwise 0
+                        val valIndex = loadedVariants.indexOfFirst { "Model ${loadedVariants.indexOf(it) + 1}" == remote.modelName }.coerceAtLeast(0)
+                        _currentVariantIndex.value = valIndex
+                    }
                 } else {
+                    currentBrand = null
                     _variants.value = emptyList()
                     _currentVariantIndex.value = 0
                 }
@@ -74,10 +91,24 @@ class RemoteViewModel(
     private fun updateVariant(index: Int) {
         _currentVariantIndex.value = index
         val remote = selectedRemote.value
-        val variant = _variants.value.getOrNull(index)
-        if (remote != null && variant != null && variant.remoteNumber != null) {
+        if (remote != null) {
             viewModelScope.launch {
-                repository.updateRemoteModel(remote.id, variant.remoteNumber)
+                repository.updateRemoteModel(remote.id, "Model ${index + 1}")
+            }
+        }
+    }
+
+    fun toggleFavoriteVariant() {
+        val remote = selectedRemote.value ?: return
+        val currentBrand = remote.brandName
+        val modelStr = "Model ${_currentVariantIndex.value + 1}"
+        val isFav = isFavoriteVariant.value
+
+        viewModelScope.launch {
+            if (isFav) {
+                repository.removeFavorite(currentBrand, modelStr)
+            } else {
+                repository.addFavorite(currentBrand, modelStr)
             }
         }
     }

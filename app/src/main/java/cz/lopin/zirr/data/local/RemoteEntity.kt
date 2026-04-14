@@ -8,6 +8,7 @@ data class RemoteEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
     val brandName: String,
-    val modelName: String?,
-    val isSelected: Boolean = false
+    val modelName: String? = null,
+    val isSelected: Boolean = false,
+    val isFavorite: Boolean = false
 )

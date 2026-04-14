@@ -33,12 +33,14 @@ class TvRepository(
             Result.failure(e)
         }
     }
-
+    fun getAllSavedRemotes(): Flow<List<RemoteEntity>> = remoteDao.getAllRemotes()
+    fun getFavoriteRemotes(): Flow<List<RemoteEntity>> = remoteDao.getFavoriteRemotes()
     fun getSelectedRemote(): Flow<RemoteEntity?> = remoteDao.getSelectedRemote()
 
-    suspend fun saveRemote(brandName: String, modelName: String? = null) {
+    suspend fun saveRemote(brandName: String, modelName: String? = "Model 1") {
         remoteDao.deselectAll()
-        val remote = RemoteEntity(brandName = brandName, modelName = modelName, isSelected = true)
+        remoteDao.cleanupOrphanedSessions()
+        val remote = RemoteEntity(brandName = brandName, modelName = modelName ?: "Model 1", isSelected = true, isFavorite = false)
         remoteDao.insertRemote(remote)
     }
 
@@ -46,6 +48,21 @@ class TvRepository(
         val entity = remoteDao.getRemoteById(id)
         if (entity != null) {
             remoteDao.updateRemote(entity.copy(modelName = modelName))
+        }
+    }
+
+    suspend fun addFavorite(brandName: String, modelName: String) = withContext(Dispatchers.IO) {
+        remoteDao.insertRemote(RemoteEntity(brandName = brandName, modelName = modelName, isFavorite = true, isSelected = false))
+    }
+
+    suspend fun removeFavorite(brandName: String, modelName: String) = withContext(Dispatchers.IO) {
+        remoteDao.deleteFavorite(brandName, modelName)
+    }
+
+    suspend fun toggleFavorite(id: Long, isFavorite: Boolean) = withContext(Dispatchers.IO) {
+        val entity = remoteDao.getRemoteById(id)
+        if (entity != null) {
+            remoteDao.updateRemote(entity.copy(isFavorite = isFavorite))
         }
     }
 
