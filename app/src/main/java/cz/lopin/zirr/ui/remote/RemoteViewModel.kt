@@ -113,6 +113,18 @@ class RemoteViewModel(
         }
     }
 
+    private fun getCarrierFrequency(protocol: String?): Int {
+        if (protocol == null) return 38000
+        val lower = protocol.lowercase()
+        return when {
+            lower.contains("56k") -> 56000
+            lower.contains("36k") -> 36000
+            lower.contains("rc5") || lower.contains("rc6") || lower.contains("philips") -> 36000
+            lower.contains("pioneer") -> 40000
+            else -> 38000
+        }
+    }
+
     private fun transmitKey(key: String) {
         val variant = currentVariant.value
         if (variant == null || variant.keys == null) {
@@ -122,8 +134,16 @@ class RemoteViewModel(
 
         val patterns = variant.keys[key]
         if (!patterns.isNullOrEmpty()) {
-            val pattern = patterns.first()  // TODO: So far we only support one pattern per key
-            transmit(IrCommand(38000, pattern))
+            val frequency = getCarrierFrequency(variant.protocol)
+            viewModelScope.launch {
+                patterns.forEachIndexed { index, pattern ->
+                    transmit(IrCommand(frequency, pattern))
+                    // Provide a small gap between commands if there are multiple parts
+                    if (index < patterns.size - 1) {
+                        kotlinx.coroutines.delay(100)
+                    }
+                }
+            }
         } else {
             viewModelScope.launch {
                 _errorEvents.emit("Button '$key' is not available for this model")
