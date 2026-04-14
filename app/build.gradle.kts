@@ -1,3 +1,5 @@
+import cz.lopin.zirr.build.GenerateTvRemotesTask
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
@@ -51,6 +53,24 @@ android {
                 "**/libsurface_util_jni.so"
             )
         }
+    }
+}
+
+val generateTvRemotesTask = tasks.register<GenerateTvRemotesTask>("generateTvRemotesJson") {
+    group = "generation"
+    description = "Generates JSON files for TV remotes from SQLite dump"
+
+    inputDbDump = rootProject.file("data/irext_db_20260215_sqlite3.db.gz")
+    parentDir = layout.buildDirectory.dir("generated/assets")
+    jsonDirName = "tv_brands_remotes"
+}
+
+androidComponents {
+    onVariants { variant ->
+        variant.sources.assets?.addGeneratedSourceDirectory(
+            generateTvRemotesTask,
+            GenerateTvRemotesTask::parentDir
+        )
     }
 }
 

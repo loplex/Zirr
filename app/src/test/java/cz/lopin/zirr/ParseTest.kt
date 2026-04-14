@@ -11,7 +11,7 @@ class ParseTest {
     fun testParse() {
         val moshi = Moshi.Builder().build()
         val adapter = moshi.adapter(BrandRemotesData::class.java)
-        val json = File("src/main/assets/tv_brands_remotes/1506_Thomson.json").readText()
+        val json = File("build/generated/assets/tv_brands_remotes/1506_Thomson.json").readText()
         val data = adapter.fromJson(json)
         assertNotNull(data)
         assertTrue(data!!.remotes.isNotEmpty())
