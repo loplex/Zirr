@@ -6,6 +6,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -20,7 +21,8 @@ import cz.lopin.zirr.data.local.RemoteEntity
 @Composable
 fun ManufacturerSelectionScreen(
     viewModel: ManufacturerViewModel,
-    onBrandSelected: () -> Unit
+    onBrandSelected: () -> Unit,
+    onNavigateToAbout: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -35,6 +37,11 @@ fun ManufacturerSelectionScreen(
                         IconButton(onClick = viewModel::showFavorites) {
                             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back to Favorites")
                         }
+                    }
+                },
+                actions = {
+                    IconButton(onClick = onNavigateToAbout) {
+                        Icon(Icons.Rounded.Info, contentDescription = "About Zirr")
                     }
                 }
             )
