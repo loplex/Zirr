@@ -7,6 +7,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.google.devtools.ksp)
     alias(libs.plugins.aboutlibraries)
+    alias(libs.plugins.dependency.analysis)
 }
 
 android {
